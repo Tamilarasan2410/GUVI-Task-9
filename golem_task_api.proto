@@ -1,0 +1,129 @@
+syntax = "proto3";
+
+package golem_task_api;
+
+service RequestorApp {
+  rpc CreateTask (CreateTaskRequest) returns (CreateTaskReply) {}
+  rpc NextSubtask (NextSubtaskRequest) returns (NextSubtaskReply) {}
+  rpc Verify (VerifyRequest) returns (VerifyReply) {}
+  rpc DiscardSubtasks (DiscardSubtasksRequest) returns (DiscardSubtasksReply) {}
+  rpc RunBenchmark (RunBenchmarkRequest) returns (RunBenchmarkReply) {}
+  rpc HasPendingSubtasks (HasPendingSubtasksRequest) returns (HasPendingSubtasksReply) {}
+  rpc AbortTask (AbortTaskRequest) returns (AbortTaskReply) {}
+  rpc AbortSubtask (AbortSubtaskRequest) returns (AbortSubtaskReply) {}
+
+  rpc Shutdown (ShutdownRequest) returns (ShutdownReply) {}
+}
+
+service ProviderApp {
+  rpc Compute (ComputeRequest) returns (ComputeReply) {}
+  rpc RunBenchmark (RunBenchmarkRequest) returns (RunBenchmarkReply) {}
+
+  rpc Shutdown (ShutdownRequest) returns (ShutdownReply) {}
+}
+
+message Infrastructure {
+  float min_memory_mib = 1;
+}
+
+message CreateTaskRequest {
+  string task_id = 1;
+  int32 max_subtasks_count = 2;
+  string task_params_json = 3;
+}
+
+message CreateTaskReply {
+  string env_id = 1;
+  string prerequisites_json = 2;
+  Infrastructure inf_requirements = 3;
+}
+
+message NextSubtaskRequest {
+  string task_id = 1;
+  string subtask_id = 2;
+  string opaque_node_id = 3;
+}
+
+message NextSubtaskReply {
+  // workaround for the lack of null values in proto3
+  // where "one of" means "at most one of"
+  oneof subtask_oneof {
+      SubtaskReply subtask = 1;
+  }
+}
+
+message SubtaskReply {
+  string subtask_params_json = 1;
+  repeated string resources = 2;
+}
+
+message ComputeRequest {
+  string task_id = 1;
+  string subtask_id = 2;
+  string subtask_params_json = 3;
+}
+
+message ComputeReply {
+  string output_filepath = 1;
+}
+
+message VerifyRequest {
+  string task_id = 1;
+  string subtask_id = 2;
+}
+
+message VerifyReply {
+  enum VerifyResult {
+    SUCCESS = 0;
+    FAILURE = 1;
+    AWAITING_DATA = 2;
+    INCONCLUSIVE = 3;
+  }
+  VerifyResult result = 1;
+  string reason = 2;
+}
+
+message DiscardSubtasksRequest {
+  string task_id = 1;
+  repeated string subtask_ids = 2;
+}
+
+message DiscardSubtasksReply {
+  repeated string discarded_subtask_ids = 1;
+}
+
+message RunBenchmarkRequest {
+}
+
+message RunBenchmarkReply {
+  float score = 1;
+}
+
+message HasPendingSubtasksRequest {
+  string task_id = 1;
+}
+
+message HasPendingSubtasksReply {
+  bool has_pending_subtasks = 1;
+}
+
+message AbortTaskRequest {
+  string task_id = 1;
+}
+
+message AbortTaskReply {
+}
+
+message AbortSubtaskRequest {
+  string task_id = 1;
+  string subtask_id = 2;
+}
+
+message AbortSubtaskReply {
+}
+
+message ShutdownRequest {
+}
+
+message ShutdownReply {
+}
